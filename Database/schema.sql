@@ -84,10 +84,11 @@ CREATE TABLE job_skills (
 );
 
 CREATE TABLE application_logs (
-    log_id INT AUTO_INCREMENT PRIMARY KEY,
-    application_id INT,
-    status VARCHAR(50),
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    log_id INT PRIMARY KEY,
+    application_id INT NOT NULL,
+
+    status VARCHAR(50) NOT NULL,
+    updated_at DATE NOT NULL,
 
     FOREIGN KEY (application_id)
     REFERENCES applications(application_id)
