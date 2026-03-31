@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Applications</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+
+body {
+  background: linear-gradient(135deg, #020617, #0a1f44);
+  color: white;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Glass cards */
+.glass {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+/* Job card */
+.job-card {
+  background: rgba(255,255,255,0.05);
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+/* Status badges */
+.status {
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.applied { background: #1e3a8a; }
+.interview { background: #f59e0b; }
+.rejected { background: #dc2626; }
+
+/* Buttons */
+.btn-glow {
+  background: #1e3a8a;
+  color: white;
+}
+
+.btn-glow:hover {
+  background: #3b82f6;
+  box-shadow: 0 0 10px #60a5fa;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container mt-4">
+
+  <h2 class="mb-4">Your Dashboard</h2>
+
+  <div class="row">
+
+    <!-- LEFT: RECOMMENDED JOBS -->
+    <div class="col-lg-6">
+
+      <div class="glass">
+        <h4>Recommended for You</h4>
+        <p class="text-secondary">Based on your skills</p>
+
+        <!-- JOB -->
+        <div class="job-card">
+          <h5>Frontend Developer</h5>
+          <p class="mb-1">Google</p>
+          <small>Matches: HTML, CSS, JavaScript</small><br>
+          <button class="btn btn-glow btn-sm mt-2">Apply</button>
+        </div>
+
+        <div class="job-card">
+          <h5>UI/UX Designer</h5>
+          <p class="mb-1">Startup XYZ</p>
+          <small>Matches: Design, Figma</small><br>
+          <button class="btn btn-glow btn-sm mt-2">Apply</button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- RIGHT: APPLICATION HISTORY -->
+    <div class="col-lg-6">
+
+      <div class="glass">
+        <h4>Your Applications</h4>
+
+        <!-- APPLICATION -->
+        <div class="job-card">
+          <h5>Frontend Intern</h5>
+          <p class="mb-1">Amazon</p>
+
+          <span class="status applied">Applied</span>
+
+          <div class="mt-2">
+            <small>Applied on: 10 March</small>
+          </div>
+        </div>
+
+        <div class="job-card">
+          <h5>Backend Engineer</h5>
+          <p class="mb-1">Microsoft</p>
+
+          <span class="status interview">Interview</span>
+
+          <div class="mt-2">
+            <small>Updated: 15 March</small>
+          </div>
+        </div>
+
+        <div class="job-card">
+          <h5>Software Engineer</h5>
+          <p class="mb-1">Meta</p>
+
+          <span class="status rejected">Rejected</span>
+
+          <div class="mt-2">
+            <small>Updated: 5 March</small>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>
