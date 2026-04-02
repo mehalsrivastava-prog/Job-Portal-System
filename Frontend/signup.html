@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Signup</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: url("./assests/background_login.jpg") no-repeat center center/cover;
+    }
+
+    .card {
+      padding: 30px;
+      border-radius: 15px;
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      width: 350px;
+    }
+
+    .text-center{
+      color: aliceblue;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <h3 class="text-center mb-3">Create Account</h3>
+
+  <form onsubmit="signup(event)">
+    <input id="name" class="form-control mb-2" placeholder="Name" required>
+    <input id="email" class="form-control mb-2" placeholder="Email" required>
+    <input id="password" type="password" class="form-control mb-3" placeholder="Password" required>
+
+    <button class="btn btn-primary w-100">Sign Up</button>
+  </form>
+
+  <p class="text-center mt-3">
+    Already have an account? <a href="login.html">Login</a>
+  </p>
+
+</div>
+
+<script>
+async function signup(e) {
+  e.preventDefault();
+
+  const name = document.getElementById("name").value;
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  const res = await fetch("http://localhost:3000/signup", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ name, email, password })
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    alert("Account created!");
+    window.location.href = "login.html";
+  } else {
+    alert(data.message || "Signup failed");
+  }
+}
+</script>
+
+</body>
+</html>
