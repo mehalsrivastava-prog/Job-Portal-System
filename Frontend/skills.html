@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Skill Setup</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+
+body {
+  background: linear-gradient(135deg,  #0f172a, #1e3a8a);
+  color: white;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Navbar */
+.navbar {
+  background: transparent;
+}
+
+.navbar-brand {
+  color: #60a5fa !important;
+  font-weight: bold;
+}
+
+/* Glass */
+.glass {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
+  border-radius: 15px;
+  padding: 25px;
+}
+/* CENTER THE BOX */
+.center-wrapper {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* COMPACT VERTICAL BOX */
+.skill-box {
+  width: 100%;
+  max-width: 400px;   /* 🔥 controls width (1/3 feel) */
+  min-height: 500px;  /* makes it vertical */
+}
+/* Skill buttons */
+.skill {
+  background: rgba(255,255,255,0.1);
+  padding: 10px 15px;
+  border-radius: 10px;
+  margin: 5px;
+  cursor: pointer;
+  display: inline-block;
+  transition: 0.2s;
+}
+
+.skill:hover {
+  background: #3b82f6;
+}
+
+.skill.selected {
+  background: #1e3a8a;
+  box-shadow: 0 0 10px #60a5fa;
+}
+
+/* Buttons */
+.btn-glow {
+  background: #1e3a8a;
+  color: white;
+}
+
+.btn-glow:hover {
+  background: #3b82f6;
+  box-shadow: 0 0 15px #60a5fa;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand text-white" href="#">JobSearch</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="center-wrapper">
+
+  <div class="glass skill-box text-center">
+
+    <h3 id="questionTitle">Select Your Skills</h3>
+    <p class="text-secondary">Pick all that apply</p>
+
+    <div id="skillsContainer" class="mt-3"></div>
+
+    <div class="mt-4">
+      <button class="btn btn-glow" onclick="submitSkills()">Save Skills</button>
+    </div>
+
+  </div>
+
+</div><script>
+
+// 🔐 CHECK LOGIN FIRST
+const userId = localStorage.getItem("user_id");
+
+if (!userId) {
+  alert("Please login first");
+  window.location.href = "login.html";
+}
+
+// ALL SKILLS
+const skills = [
+  "Algorithms","AWS","C++","Data Analysis","Docker","Git",
+  "Java","Linux","Machine Learning","Node.js","Python",
+  "React","SQL","Testing","Web Development"
+];
+
+let selectedSkills = [];
+
+renderSkills(); // 🔥 show UI immediately
+
+fetch(`http://localhost:3000/profile/${userId}`)
+  .then(res => res.json())
+  .then(data => {
+    if (data.skills) {
+      selectedSkills = data.skills;
+      renderSkills(); // update UI with selected skills
+    }
+  })
+  .catch(err => console.error(err));// RENDER
+function renderSkills() {
+  const container = document.getElementById("skillsContainer");
+  const title = document.getElementById("questionTitle");
+
+  title.innerText = "Select Your Skills";
+  container.innerHTML = "";
+
+  skills.forEach(skill => {
+    const div = document.createElement("div");
+    div.className = "skill";
+
+    if (selectedSkills.includes(skill)) {
+      div.classList.add("selected");
+    }
+
+    div.innerText = skill;
+    div.onclick = () => toggleSkill(skill, div);
+
+    container.appendChild(div);
+  });
+}
+// TOGGLE
+function toggleSkill(skill, element) {
+  if (selectedSkills.includes(skill)) {
+    selectedSkills = selectedSkills.filter(s => s !== skill);
+    element.classList.remove("selected");
+  } else {
+    selectedSkills.push(skill);
+    element.classList.add("selected");
+  }
+}
+
+function submitSkills() {
+
+  if (selectedSkills.length === 0) {
+    alert("Please select at least 1 skill");
+    return;
+  }
+
+  fetch("http://localhost:3000/save-skills", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      user_id: userId,
+      skills: selectedSkills
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert("Skills saved 🚀");
+    window.location.href = "home.html";
+  })
+  .catch(err => console.error(err));
+}
+
+</script>
+
+</body>
+</html>
