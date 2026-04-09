@@ -58,33 +58,59 @@ body {
 
 <body>
 
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+
+    <a class="navbar-brand text-white" href="#">JobSearch</a>
+
+    <div class="d-flex gap-4">
+      <a href="home.html" class="text-white nav-link">Home</a>
+      <a href="profile.html" class="text-white nav-link">Profile</a>
+      <a href="companies.html" class="text-white nav-link">Companies</a>
+      
+    </div>
+
+  </div>
+</nav>
+
 <div class="container mt-4">
 
   <h2 class="mb-4">Your Dashboard</h2>
+<div class="row mb-4 text-center">
 
+  <div class="col-md-4">
+    <div class="glass">
+      <h5>Total Jobs</h5>
+      <h2 id="totalJobs">0</h2>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="glass">
+      <h5>Total Companies</h5>
+      <h2 id="totalCompanies">0</h2>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="glass">
+      <h5>Total Applications</h5>
+      <h2 id="totalApplications">0</h2>
+    </div>
+  </div>
+
+</div>
   <div class="row">
 
     <!-- LEFT: RECOMMENDED JOBS -->
     <div class="col-lg-6">
 
       <div class="glass">
-        <h4>Recommended for You</h4>
+        <h4 >Recommended for You</h4>
         <p class="text-secondary">Based on your skills</p>
 
         <!-- JOB -->
-        <div class="job-card">
-          <h5>Frontend Developer</h5>
-          <p class="mb-1">Google</p>
-          <small>Matches: HTML, CSS, JavaScript</small><br>
-          <button class="btn btn-glow btn-sm mt-2">Apply</button>
-        </div>
-
-        <div class="job-card">
-          <h5>UI/UX Designer</h5>
-          <p class="mb-1">Startup XYZ</p>
-          <small>Matches: Design, Figma</small><br>
-          <button class="btn btn-glow btn-sm mt-2">Apply</button>
-        </div>
+       <div id="recommendedJobs"></div>
 
       </div>
 
@@ -92,51 +118,137 @@ body {
 
     <!-- RIGHT: APPLICATION HISTORY -->
     <div class="col-lg-6">
+  <div class="glass">
+    <h4>Your Applications</h4>
 
-      <div class="glass">
-        <h4>Your Applications</h4>
-
-        <!-- APPLICATION -->
-        <div class="job-card">
-          <h5>Frontend Intern</h5>
-          <p class="mb-1">Amazon</p>
-
-          <span class="status applied">Applied</span>
-
-          <div class="mt-2">
-            <small>Applied on: 10 March</small>
-          </div>
-        </div>
-
-        <div class="job-card">
-          <h5>Backend Engineer</h5>
-          <p class="mb-1">Microsoft</p>
-
-          <span class="status interview">Interview</span>
-
-          <div class="mt-2">
-            <small>Updated: 15 March</small>
-          </div>
-        </div>
-
-        <div class="job-card">
-          <h5>Software Engineer</h5>
-          <p class="mb-1">Meta</p>
-
-          <span class="status rejected">Rejected</span>
-
-          <div class="mt-2">
-            <small>Updated: 5 March</small>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
+    <div id="applicationsContainer"></div>
 
   </div>
+</div>
+
+  </div>
+  
 
 </div>
 
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const userId = localStorage.getItem("user_id") ||1;
+
+  // ✅ 1. Stats
+  fetch(`http://localhost:3000/dashboard/stats/${userId}`)
+    .then(res => res.json())
+    .then(data => {
+      console.log("STATS:", data);
+
+      document.getElementById('totalJobs').innerText = data.total_jobs || 0;
+      document.getElementById('totalCompanies').innerText = data.total_companies || 0;
+      document.getElementById('totalApplications').innerText = data.total_applications || 0;
+    })
+    .catch(err => console.error("Stats error:", err));
+
+
+  // ✅ 2. Recommended Jobs (SAFE)
+  fetch(`http://localhost:3000/recommended-jobs/${userId}`)
+    .then(res => {
+      if (!res.ok) throw new Error("Route not found");
+      return res.json();
+    })
+    .then(data => {
+      console.log("RECOMMENDED:", data);
+
+      const container = document.getElementById('recommendedJobs');
+
+      if (!data || data.length === 0) {
+        container.innerHTML = "<p>No recommendations yet</p>";
+        return;
+      }
+
+      let html = "";
+
+      data.forEach(job => {
+        const percent = Math.round(job.match_score || 0);
+
+        html += `
+          <div class="job-card">
+            <h5>${job.title}</h5>
+            <p>${job.company_name}</p>
+
+            <small><b>Match: ${percent}%</b></small><br>
+
+            <button class="btn btn-glow btn-sm mt-2" onclick="applyJob(${job.job_id})">
+              Apply
+            </button>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    })
+    .catch(err => {
+      console.error("Jobs error:", err);
+      document.getElementById('recommendedJobs').innerHTML = "<p>No recommendations available</p>";
+    });
+
+
+  // ✅ 3. Applications
+  fetch(`http://localhost:3000/dashboard/recent-applications/${userId}`)
+    .then(res => res.json())
+    .then(data => {
+      console.log("APPLICATIONS:", data);
+
+      const container = document.getElementById('applicationsContainer');
+
+      let html = "";
+
+      data.forEach(app => {
+        let statusClass = "applied";
+
+        if (app.status === "interview") statusClass = "interview";
+        if (app.status === "rejected") statusClass = "rejected";
+
+        html += `
+          <div class="job-card">
+            <h5>${app.title}</h5>
+            <p>${app.company_name}</p>
+
+            <span class="status ${statusClass}">
+              ${app.status}
+            </span>
+
+            <div class="mt-2">
+              <small>${new Date(app.applied_at).toDateString()}</small>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    })
+    .catch(err => console.error("Applications error:", err));
+
+});
+
+
+// ✅ Apply Job
+function applyJob(jobId) {
+  const userId = localStorage.getItem("user_id");
+
+  fetch('http://localhost:3000/apply', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      user_id: userId,
+      job_id: jobId
+    })
+  })
+  .then(res => res.text())
+  .then(msg => alert(msg))
+  .catch(err => console.error("Apply error:", err));
+}
+</script>
 </body>
 </html>
