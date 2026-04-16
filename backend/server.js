@@ -11,10 +11,10 @@ app.use(cors());
 app.use(express.json());
 
 const db = mysql.createConnection({
-  host: "interchange.proxy.rlwy.net",
+  host: " ",
   port: 21480,
   user: "root",
-  password: "lCAAzdRJpthCXWElhgNKZtMGTbMHMMDD",
+  password: " ",
   database: "job_portal",
   ssl: {
     rejectUnauthorized: false
