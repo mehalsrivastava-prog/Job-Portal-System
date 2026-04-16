@@ -66,11 +66,12 @@ body {
 <!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg">
   <div class="container">
-    <a class="navbar-brand text-white" href="#">⚡ JobX</a>
+    <a class="navbar-brand text-white" href="#">JobX</a>
 
     <div class="ms-auto d-flex gap-4">
       <a href="home.html" class="text-white">Home</a>
       <a href="profile.html" class="text-white">Profile</a>
+      <a href="job-listings.html" class="text-white">Dashboard</a>
     </div>
   </div>
 </nav>
@@ -130,6 +131,105 @@ body {
   </div>
 
 </div>
+<script>
+
+let jobsData = [];
+
+// Step 1: get all jobs
+fetch('http://localhost:3000/jobs')
+  .then(res => res.json())
+  .then(jobs => {
+    jobsData = jobs;
+
+    // Step 2: get companies
+    return fetch('http://localhost:3000/companies');
+  })
+  .then(res => res.json())
+  .then(companies => {
+
+    const container = document.querySelector('.row');
+
+    container.innerHTML = ""; // clear old UI
+
+    companies.forEach(company => {
+
+      let companyHTML = `
+        <div class="col-md-6 mb-4">
+          <div class="glass">
+            <h4 class="company-name">${company.company_name}</h4>
+            <p class="text-secondary">${company.location}</p>
+            <div id="company-${company.company_id}"></div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML += companyHTML;
+
+      const jobContainer = document.getElementById(`company-${company.company_id}`);
+
+      jobsData.forEach(job => {
+        if (job.company_id == company.company_id) {
+
+          const jobCard = `
+  <div class="job">
+    <h6>${job.title}</h6>
+    <p class="mb-1">₹${job.salary}</p>
+    <p class="text-secondary">${job.location}</p>
+
+    <button id="btn-${job.job_id}"
+            class="btn btn-glow btn-sm"
+            onclick="applyJob(${job.job_id})">
+      Apply
+    </button>
+  </div>
+`;
+
+          jobContainer.innerHTML += jobCard;
+        }
+      });
+
+    });
+
+  })
+  .catch(err => console.log(err));
+
+</script>
+<script>
+function applyJob(jobId) {
+
+  const btn = document.getElementById(`btn-${jobId}`);
+  const userId = localStorage.getItem("user_id");
+
+  if (!userId) {
+    alert("Please login first");
+    return;
+  }
+
+  if (appliedJobs.includes(jobId)) {
+    btn.innerText = "Already Applied";
+    btn.style.background = "gray";
+    return;
+  }
+
+  fetch('http://localhost:3000/apply', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      user_id: userId,
+      job_id: jobId
+    })
+  })
+  .then(res => res.text())
+  .then(data => {
+    appliedJobs.push(jobId);
+    btn.innerText = "Applied";
+    btn.style.background = "green";
+  })
+  .catch(err => console.log(err));
+}
+</script>
 
 </body>
 </html>
