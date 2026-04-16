@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Companies & Jobs</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+
+body {
+  background: linear-gradient(135deg, #020617, #0a1f44);
+  color: white;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Glass Card */
+.glass {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
+  border-radius: 15px;
+  padding: 20px;
+  transition: 0.3s;
+}
+
+.glass:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0 20px rgba(96,165,250,0.3);
+}
+
+/* Company title */
+.company-name {
+  color: #60a5fa;
+}
+
+/* Job card inside */
+.job {
+  background: rgba(255,255,255,0.05);
+  padding: 10px;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+/* Buttons */
+.btn-glow {
+  background: #1e3a8a;
+  color: white;
+  border: none;
+}
+
+.btn-glow:hover {
+  background: #3b82f6;
+  box-shadow: 0 0 10px #60a5fa;
+}
+
+/* Navbar */
+.navbar {
+  background: transparent;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand text-white" href="#">JobX</a>
+
+    <div class="ms-auto d-flex gap-4">
+      <a href="home.html" class="text-white">Home</a>
+      <a href="profile.html" class="text-white">Profile</a>
+      <a href="job-listings.html" class="text-white">Dashboard</a>
+    </div>
+  </div>
+</nav>
+
+<!-- PAGE TITLE -->
+<div class="container mt-4">
+  <h2>Explore Companies & Jobs</h2>
+</div>
+
+<!-- COMPANIES -->
+<div class="container mt-4">
+
+  <div class="row">
+
+    <!-- COMPANY CARD -->
+    <div class="col-md-6 mb-4">
+      <div class="glass">
+
+        <h4 class="company-name">Google</h4>
+        <p class="text-secondary">Bangalore</p>
+
+        <!-- JOBS -->
+        <div class="job">
+          <h6>Frontend Developer</h6>
+          <p class="mb-1">₹20 LPA</p>
+          <p class="text-secondary">Bangalore</p>
+          <button class="btn btn-glow btn-sm">Apply</button>
+        </div>
+
+        <div class="job">
+          <h6>Backend Engineer</h6>
+          <p class="mb-1">₹25 LPA</p>
+          <p class="text-secondary">Remote</p>
+          <button class="btn btn-glow btn-sm">Apply</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ANOTHER COMPANY -->
+    <div class="col-md-6 mb-4">
+      <div class="glass">
+
+        <h4 class="company-name">Amazon</h4>
+        <p class="text-secondary">Hyderabad</p>
+
+        <div class="job">
+          <h6>Software Engineer</h6>
+          <p class="mb-1">₹22 LPA</p>
+          <p class="text-secondary">Hyderabad</p>
+          <button class="btn btn-glow btn-sm">Apply</button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+<script>
+
+let jobsData = [];
+
+// Step 1: get all jobs
+fetch('http://localhost:3000/jobs')
+  .then(res => res.json())
+  .then(jobs => {
+    jobsData = jobs;
+
+    // Step 2: get companies
+    return fetch('http://localhost:3000/companies');
+  })
+  .then(res => res.json())
+  .then(companies => {
+
+    const container = document.querySelector('.row');
+
+    container.innerHTML = ""; // clear old UI
+
+    companies.forEach(company => {
+
+      let companyHTML = `
+        <div class="col-md-6 mb-4">
+          <div class="glass">
+            <h4 class="company-name">${company.company_name}</h4>
+            <p class="text-secondary">${company.location}</p>
+            <div id="company-${company.company_id}"></div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML += companyHTML;
+
+      const jobContainer = document.getElementById(`company-${company.company_id}`);
+
+      jobsData.forEach(job => {
+        if (job.company_id == company.company_id) {
+
+          const jobCard = `
+  <div class="job">
+    <h6>${job.title}</h6>
+    <p class="mb-1">₹${job.salary}</p>
+    <p class="text-secondary">${job.location}</p>
+
+    <button id="btn-${job.job_id}"
+            class="btn btn-glow btn-sm"
+            onclick="applyJob(${job.job_id})">
+      Apply
+    </button>
+  </div>
+`;
+
+          jobContainer.innerHTML += jobCard;
+        }
+      });
+
+    });
+
+  })
+  .catch(err => console.log(err));
+
+</script>
+<script>
+function applyJob(jobId) {
+
+  const btn = document.getElementById(`btn-${jobId}`);
+  const userId = localStorage.getItem("user_id");
+
+  if (!userId) {
+    alert("Please login first");
+    return;
+  }
+
+  if (appliedJobs.includes(jobId)) {
+    btn.innerText = "Already Applied";
+    btn.style.background = "gray";
+    return;
+  }
+
+  fetch('http://localhost:3000/apply', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      user_id: userId,
+      job_id: jobId
+    })
+  })
+  .then(res => res.text())
+  .then(data => {
+    appliedJobs.push(jobId);
+    btn.innerText = "Applied";
+    btn.style.background = "green";
+  })
+  .catch(err => console.log(err));
+}
+</script>
+
+</body>
+</html>

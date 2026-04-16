@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Portal Login</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      background: url("./assets/background_login.jpg") no-repeat center center/cover;
+      height: 100vh;
+      font-family: Arial;
+    }
+
+    .overlay {
+      height: 100vh;
+    }
+
+    .login-container {
+      height: 100%;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 380px;
+      padding: 35px;
+      border-radius: 15px;
+      background: rgba(255,255,255,0.05);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .btn-login {
+      background: #2d56c7;
+      color: white;
+    }
+
+    .btn-login:hover {
+      background: #3b82f6;
+    }
+
+    .btn-signup {
+      border: 1px solid #1e3a8a;
+      color: #2e58cc;
+    }
+
+    .btn-signup:hover {
+      background: #2c58cf;
+      color: white;
+    }
+
+    .text-center{
+      color: aliceblue;
+    }
+
+    .doc{
+      color: aliceblue;
+    }
+    
+  </style>
+</head>
+
+<body>
+
+<div class="overlay">
+  <div class="container login-container d-flex justify-content-center align-items-center">
+
+    <div class="login-card">
+
+      <h3 class="text-center mb-4">JOB PORTAL</h3>
+
+      <form onsubmit="login(event)">
+
+        <div class="mb-3">
+          <label class="doc">Email</label>
+          <input type="email" id="email" class="form-control" placeholder="Enter email" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="doc">Password</label>
+          <input type="password" id="password" class="form-control" placeholder="Enter password" required>
+        </div>
+
+        <!-- LOGIN BUTTON -->
+        <button type="submit" class="btn btn-login w-100 mb-3">Login</button>
+
+      </form>
+
+      <!-- DIVIDER -->
+      <div class="text-center mb-3">
+        <small>OR</small>
+      </div>
+
+      <!-- SIGNUP BUTTON -->
+      <button class="btn btn-signup w-100" onclick="goToSignup()">
+        Create New Account
+      </button>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+async function login(e) {
+  e.preventDefault();
+
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  try {
+    const res = await fetch("http://localhost:3000/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+
+      // ✅ store user id
+      localStorage.setItem("user_id", data.user_id);
+
+      // 🔥 CHECK IF USER HAS SKILLS
+      const skillRes = await fetch(`http://localhost:3000/user-skills/${data.user_id}`);
+      const skillData = await skillRes.json();
+
+      if (!skillData || skillData.length === 0) {
+        // 👉 No skills → go to setup
+        window.location.href = "skills.html";
+      } else {
+        // 👉 Already has skills → go home
+        window.location.href = "home.html";
+      }
+
+    } else {
+      alert("Invalid email or password");
+    }
+
+  } catch (err) {
+    console.log(err);
+    alert("Server not reachable");
+  }
+}
+
+function goToSignup() {
+  window.location.href = "signup.html";
+}
+</script>
+</body>
+</html>
