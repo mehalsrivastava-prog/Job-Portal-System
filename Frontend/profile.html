@@ -48,116 +48,207 @@
 
 <body>
 
-  <div class="container mt-4">
+<div class="container mt-4">
 
-    <div class="row">
+  <div class="row">
 
-      <div class="col-lg-8">
+    <!-- LEFT -->
+    <div class="col-lg-8">
 
-        <!-- Profile -->
-        <div class="card-custom p-0">
-          <div class="cover"></div>
+      <!-- Profile -->
+      <div class="card-custom p-0">
+        <div class="cover"></div>
 
-          <div class="p-3">
-            <img src="https://via.placeholder.com/150" class="profile-img">
-
-            <h3 id="name">Loading...</h3>
-            <p id="role"></p>
-            <p id="location"></p>
-          </div>
+        <div class="p-3">
+          <img src="https://via.placeholder.com/150" class="profile-img">
+          <h3 id="name">Loading...</h3>
         </div>
-
-        <!-- Match Score -->
-        <div class="card-custom">
-          <h5>Top Job Matches</h5>
-          <div id="matchContainer"></div>
-        </div>
-
       </div>
 
-      <!-- RIGHT -->
-      <div class="col-lg-4">
+      <!-- Matches -->
+      <div class="card-custom">
+        <h5>Top Job Matches</h5>
+        <div id="matchContainer"></div>
+      </div>
 
-        <div class="card-custom">
-          <h5>Skills</h5>
-          <div id="skillsContainer"></div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="col-lg-4">
+
+      <!-- Skills -->
+      <div class="card-custom">
+        <h5>Skills</h5>
+        <div id="skillsContainer"></div>
+      </div>
+
+      <!-- Progress -->
+      <div class="card-custom">
+        <h5>📊 Skill Progress</h5>
+        <div id="progressText"></div>
+
+        <div style="background:#1e293b; border-radius:5px; height:8px;">
+          <div id="progressBar"
+            style="height:8px; background:#3b82f6; width:0%; border-radius:5px;">
+          </div>
         </div>
-
       </div>
 
     </div>
 
   </div>
 
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
+</div>
 
-      const userId = localStorage.getItem("user_id");
+<script>
 
-      // 🔹 PROFILE
-      fetch(`http://localhost:3000/profile/${userId}`)
-        .then(res => res.json())
-        .then(data => {
+document.addEventListener("DOMContentLoaded", () => {
+  const userId = localStorage.getItem("user_id") || 1;
 
-          document.getElementById("name").innerText = data.name || "No Name";
-
-          const skillsContainer = document.getElementById("skillsContainer");
-
-          let html = "";
-
-          if (!data.skills || data.skills.length === 0) {
-            html = "<p>No skills added</p>";
-          } else {
-            data.skills.forEach(s => {
-              html += `<span class="badge badge-skill">${s}</span>`;
-            });
-          }
-
-          skillsContainer.innerHTML = html;
-
-        })
-        .catch(err => console.error("Profile error:", err));
+  loadProfile(userId);
+  loadMatches(userId);
+  loadProgress(userId);
+});
 
 
-      // 🔥 MATCH SCORE (NOW INSIDE SAME BLOCK)
-      fetch(`http://localhost:3000/recommended-jobs/${userId}`)
-        .then(res => res.json())
-        .then(data => {
+// =======================
+// PROFILE
+// =======================
+function loadProfile(userId) {
+  fetch(`http://localhost:3000/profile/${userId}`)
+    .then(res => res.json())
+    .then(data => {
 
-          const matchContainer = document.getElementById("matchContainer");
+      document.getElementById("name").innerText = data.name || "No Name";
 
-          let html = "";
+      let html = "";
 
-          if (!data || data.length === 0) {
-            matchContainer.innerHTML = "No matches";
-            return;
-          }
+      if (!data.skills || data.skills.length === 0) {
+        html = "No skills";
+      } else {
+        data.skills.forEach(s => {
+          html += `<span class="badge badge-skill">${s}</span>`;
+        });
+      }
 
-          data.slice(0, 3).forEach(job => {
-            const percent = Math.round(job.match_score || 0);
-
-            html += `
-          <div class="mb-3">
-            <strong>${job.title}</strong>
-            <p>${job.company_name}</p>
-
-            <small>${percent}% match</small>
-            <div class="match-bar" style="width:${percent}%"></div>
-
-            <div style="font-size: 13px; margin-top: 5px;">
-              Skills needed: ${job.missing_skills?.join(", ") || "None"}
-            </div>
-          </div>
-        `;
-          });
-
-          matchContainer.innerHTML = html;
-
-        })
-        .catch(err => console.error("Match error:", err));
-
+      document.getElementById("skillsContainer").innerHTML = html;
     });
-  </script>
-</body>
+}
 
+
+// =======================
+// MATCHES
+// =======================
+function loadMatches(userId) {
+
+  fetch(`http://localhost:3000/recommended-jobs/${userId}`)
+    .then(res => res.json())
+    .then(data => {
+
+      const container = document.getElementById("matchContainer");
+
+      let html = "";
+
+      data.slice(0,3).forEach(job => {
+
+        const percent = Math.round(job.match_score || 0);
+        const missing = job.missing_skills || [];
+
+        html += `
+        <div class="mb-3 p-3" style="background:rgba(255,255,255,0.05); border-radius:10px;">
+          
+          <strong>${job.title}</strong>
+          <p>${job.company_name}</p>
+
+          <small>${percent}% match</small>
+          <div class="match-bar" style="width:${percent}%"></div>
+
+          ${
+            missing.length > 0
+            ? `
+              🔥 ${missing.length} skill away!
+
+              ${missing.map(skill => `
+                <div class="mt-2">
+
+                  <b>${skill}</b><br>
+
+                  <button class="btn btn-warning btn-sm"
+                    onclick="learnSkills('${skill}')">
+                    ▶ Learn
+                  </button>
+
+                  <button class="btn btn-success btn-sm"
+                    onclick="markLearned('${skill}')">
+                      Mark as learned
+                  </button>
+
+                </div>
+              `).join("")}
+            `
+            : `<div style="color:lightgreen;">✅ Ready to Apply 🚀</div>`
+          }
+
+        </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    });
+}
+
+
+// =======================
+// LEARN (SAFE VERSION)
+// =======================
+function learnSkills(skill) {
+  const query = encodeURIComponent(skill + " tutorial");
+
+  window.open(`https://www.youtube.com/results?search_query=${query}`, "_blank");
+}
+
+
+// =======================
+// MARK LEARNED
+// =======================
+function markLearned(skill) {
+  const userId = localStorage.getItem("user_id") || 1;
+
+  fetch('http://localhost:3000/mark-learned', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      user_id: userId,
+      skill_name: skill
+    })
+  })
+  .then(res => res.text())
+  .then(msg => {
+    alert(msg);
+
+    // simple + reliable
+    location.reload();
+  });
+}
+
+
+// =======================
+// PROGRESS
+// =======================
+function loadProgress(userId) {
+  fetch(`http://localhost:3000/learning-progress/${userId}`)
+    .then(res => res.json())
+    .then(data => {
+
+      document.getElementById("progressText").innerText =
+        `${data.percent}% completed`;
+
+      document.getElementById("progressBar").style.width =
+        data.percent + "%";
+    });
+}
+
+</script>
+
+</body>
 </html>

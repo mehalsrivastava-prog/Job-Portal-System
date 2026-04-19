@@ -11,10 +11,10 @@ app.use(cors());
 app.use(express.json());
 
 const db = mysql.createConnection({
-  host: " ",
+  host: "interchange.proxy.rlwy.net",
   port: 21480,
   user: "root",
-  password: " ",
+  password: "lCAAzdRJpthCXWElhgNKZtMGTbMHMMDD",
   database: "job_portal",
   ssl: {
     rejectUnauthorized: false
@@ -358,4 +358,25 @@ app.get('/user-skills/:id', (req, res) => {
       res.json(results); // empty [] or filled
     }
   );
+});
+
+app.post('/mark-learned', (req, res) => {
+  const { user_id, skill_name } = req.body;
+
+  const query = `
+    INSERT INTO user_skills (user_id, skill_id)
+    SELECT ?, skill_id FROM skills
+    WHERE skill_name = ?
+  `;
+
+  db.query(query, [user_id, skill_name], (err) => {
+    if (err) {
+      if (err.code === 'ER_DUP_ENTRY') {
+        return res.send("Already learned ✅");
+      }
+      return res.status(500).send(err);
+    }
+
+    res.send("Skill learned 🚀");
+  });
 });
