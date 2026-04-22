@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Company Signup</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: url("./assets/background_login.jpg") no-repeat center center/cover;
+    }
+
+    .card {
+      padding: 30px;
+      border-radius: 15px;
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      width: 350px;
+    }
+
+    .text-center{
+      color: aliceblue;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <h3 class="text-center mb-3">Register Company</h3>
+
+  <form onsubmit="signupCompany(event)">
+
+    <input id="company_name" class="form-control mb-2" placeholder="Company Name" required>
+
+    <input id="email" class="form-control mb-2" placeholder="Company Email" required>
+
+    <input id="password" type="password" class="form-control mb-2" placeholder="Password" required>
+
+    <input id="location" class="form-control mb-3" placeholder="Location (optional)">
+
+    <button class="btn btn-primary w-100">Sign Up</button>
+
+  </form>
+
+  <p class="text-center mt-3">
+    Already registered? <a href="company_login.html">Login</a>
+  </p>
+
+</div>
+
+<script>
+async function signupCompany(e) {
+  e.preventDefault();
+
+  const company_name = document.getElementById("company_name").value;
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const location = document.getElementById("location").value;
+
+  try {
+    const res = await fetch("http://localhost:3000/company-signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ company_name, email, password, location })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert("Company registered!");
+      window.location.href = "company_login.html";
+    } else {
+      alert(data.message || "Signup failed");
+    }
+
+  } catch (err) {
+    console.log(err);
+    alert("Server error");
+  }
+}
+</script>
+
+</body>
+</html>

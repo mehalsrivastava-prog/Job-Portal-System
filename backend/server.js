@@ -10,25 +10,28 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const db = mysql.createConnection({
+const db = mysql.createPool({
   host: "interchange.proxy.rlwy.net",
   port: 21480,
   user: "root",
   password: "lCAAzdRJpthCXWElhgNKZtMGTbMHMMDD",
   database: "job_portal",
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
   ssl: {
     rejectUnauthorized: false
   }
 });
 
-db.connect((err) => {
+db.getConnection((err, connection) => {
   if (err) {
-    console.log("DB ERROR:", err);
-  } else {
-    console.log("Connected to Railway MySQL");
+    console.error("DB connection failed:", err);
+    return;
   }
+  console.log("MySQL Pool Connected");
+  connection.release();
 });
-
 // ==========================
 // 🚀 BASIC ROUTE
 // ==========================
@@ -436,5 +439,91 @@ app.get("/top-companies", (req, res) => {
       return res.status(500).json({ error: "Database error" });
     }
     res.json(result);
+  });
+});
+
+app.get("/company-dashboard/:company_id", (req, res) => {
+  const companyId = req.params.company_id;
+
+  const sql = `
+    SELECT j.job_id, j.title, j.salary, j.location,
+           u.user_id, u.name AS user_name,
+           COUNT(*) AS match_score
+    FROM jobs j
+    LEFT JOIN job_skills js ON j.job_id = js.job_id
+    LEFT JOIN user_skills us ON js.skill_id = us.skill_id
+    LEFT JOIN users u ON us.user_id = u.user_id
+    WHERE j.company_id = ?
+    GROUP BY j.job_id, u.user_id
+    ORDER BY j.job_id, match_score DESC
+  `;
+
+  db.query(sql, [companyId], (err, result) => {
+    if (err) return res.status(500).json(err);
+
+    const jobs = {};
+
+    result.forEach(row => {
+      if (!jobs[row.job_id]) {
+        jobs[row.job_id] = {
+          job_id: row.job_id,
+          title: row.title,
+          salary: row.salary,
+          location: row.location,
+          candidates: []
+        };
+      }
+
+      if (row.user_id && jobs[row.job_id].candidates.length < 5) {
+        jobs[row.job_id].candidates.push({
+          name: row.user_name,
+          score: row.match_score
+        });
+      }
+    });
+
+    res.json(Object.values(jobs));
+  });
+});
+
+app.post("/company-login", (req, res) => {
+  const { email, password } = req.body;
+
+  const sql = `
+    SELECT company_id, company_name
+    FROM companies
+    WHERE email = ? AND password_hash = ?
+  `;
+
+  db.query(sql, [email, password], (err, result) => {
+    if (err) return res.status(500).json(err);
+
+    if (result.length > 0) {
+      res.json({
+        success: true,
+        company_id: result[0].company_id,
+        company_name: result[0].company_name
+      });
+    } else {
+      res.json({ success: false });
+    }
+  });
+});
+
+app.post("/company-signup", (req, res) => {
+  const { company_name, email, password, location } = req.body;
+
+  const sql = `
+    INSERT INTO companies (company_name, email, password_hash, location)
+    VALUES (?, ?, ?, ?)
+  `;
+
+  db.query(sql, [company_name, email, password, location], (err, result) => {
+    if (err) {
+      console.log(err);
+      return res.json({ success: false, message: err.message });
+    }
+
+    res.json({ success: true });
   });
 });

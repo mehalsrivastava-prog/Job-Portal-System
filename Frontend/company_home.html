@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Company Dashboard</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+
+/* Background */
+body {
+  background: linear-gradient(135deg, #020617, #0a1f44);
+  color: white;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(96,165,250,0.15), transparent 70%);
+  top: 10%;
+  left: 20%;
+  z-index: -1;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(59,130,246,0.1), transparent 70%);
+  bottom: 10%;
+  right: 10%;
+  z-index: -1;
+}
+
+/* Navbar */
+.navbar {
+  background: transparent;
+}
+
+/* Hero */
+.hero {
+  padding: 60px 20px 30px;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+.hero span {
+  color: #60a5fa;
+}
+
+/* Cards */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 20px;
+  transition: 0.3s;
+}
+
+.glass:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 0 20px rgba(96,165,250,0.3);
+}
+
+/* Candidate list */
+ul {
+  padding-left: 20px;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- NAVBAR (same style as your project) -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <h5 class="text-white m-0">Company Dashboard</h5>
+
+    <div class="ms-auto">
+      <button class="btn btn-sm btn-outline-light" onclick="logout()">Logout</button>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Welcome back, <span id="companyName">Company</span></h1>
+  <p class="text-light">Manage your openings and discover top candidates.</p>
+</div>
+
+<!-- JOB LIST -->
+<div class="container">
+
+  <h5 class="mb-4">📌 Your Job Openings</h5>
+
+  <div class="row" id="companyJobs"></div>
+
+</div>
+
+<script>
+const API_URL = "http://localhost:3000";
+
+// get from login
+const company_id = localStorage.getItem("company_id");
+const company_name = localStorage.getItem("company_name");
+
+// set name
+document.getElementById("companyName").innerText = company_name || "Company";
+
+// format salary
+function formatLPA(salary) {
+  return (salary / 100000).toFixed(1) + " LPA";
+}
+
+// fetch data
+fetch(`${API_URL}/company-dashboard/${company_id}`)
+  .then(res => res.json())
+  .then(data => {
+
+    const container = document.getElementById("companyJobs");
+    container.innerHTML = "";
+
+    if (data.length === 0) {
+      container.innerHTML = "<p>No jobs posted yet.</p>";
+      return;
+    }
+
+    data.forEach(job => {
+
+      let candidatesHTML = "";
+
+      if (!job.candidates || job.candidates.length === 0) {
+        candidatesHTML = `<p class="text-secondary">No matching candidates yet</p>`;
+      } else {
+
+        job.candidates.forEach((c, index) => {
+          candidatesHTML += `
+            <li ${index === 0 ? 'class="text-success fw-bold"' : ''}>
+              ${c.name} (score: ${c.score})
+            </li>
+          `;
+        });
+
+      }
+
+      container.innerHTML += `
+        <div class="col-md-6 mb-4">
+          <div class="glass">
+
+            <h5>${job.title}</h5>
+            <p class="text-success">₹${formatLPA(job.salary)}</p>
+            <p class="text-secondary">${job.location || "Remote"}</p>
+
+            <hr>
+
+            <h6>🎯 Top Candidates</h6>
+            <ul>${candidatesHTML}</ul>
+
+          </div>
+        </div>
+      `;
+    });
+
+  })
+  .catch(err => console.log(err));
+
+</script>
+
+</body>
+</html>
