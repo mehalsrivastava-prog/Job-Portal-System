@@ -10,6 +10,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use((req, res, next) => {
+  console.log("Incoming:", req.method, req.url);
+  next();
+});
+
 const db = mysql.createPool({
   host: "interchange.proxy.rlwy.net",
   port: 21480,
@@ -205,9 +210,7 @@ app.get("/dashboard/recent-applications/:userId", (req, res) => {
 // ==========================
 // 🚀 START SERVER
 // ==========================
-app.listen(3000, () => {
-  console.log("🚀 Server running at http://localhost:3000");
-});
+
 app.get('/profile/:id', (req, res) => {
   const userId = req.params.id;
 
@@ -526,4 +529,43 @@ app.post("/company-signup", (req, res) => {
 
     res.json({ success: true });
   });
+});
+
+
+app.get("/company/:id/jobs", (req, res) => {
+  db.query(
+    "SELECT * FROM jobs WHERE company_id = ?",
+    [req.params.id],
+    (err, result) => res.json(result)
+  );
+});
+
+// 🔥 OUTSIDE everything
+app.post("/add-job", (req, res) => {
+  console.log(" ADD JOB HIT");
+
+  const { company_id, title, salary, location, skills } = req.body;
+
+  db.query(
+    `INSERT INTO jobs (company_id, title, salary, location)
+     VALUES (?, ?, ?, ?)`,
+    [company_id, title, salary, location],
+    (err, result) => {
+
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ success: false });
+      }
+
+      res.json({ success: true });
+    }
+  );
+});
+app.post("/add-job", (req, res) => {
+  console.log("🔥 ADD JOB HIT");
+  res.json({ success: true });
+});
+
+app.listen(3000, () => {
+  console.log("🚀 Server running at http://localhost:3000");
 });
