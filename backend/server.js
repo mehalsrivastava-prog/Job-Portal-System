@@ -402,3 +402,39 @@ app.get("/search-jobs", (req, res) => {
     res.json(results);
   });
 });
+
+app.get("/top-jobs", (req, res) => {
+  const sql = `
+    SELECT title, salary
+    FROM jobs
+    ORDER BY salary DESC
+    LIMIT 5
+  `;
+
+  db.query(sql, (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Database error" });
+    }
+    res.json(result);
+  });
+});
+
+app.get("/top-companies", (req, res) => {
+  const sql = `
+    SELECT c.company_name, COUNT(j.job_id) AS total_jobs
+    FROM companies c
+    JOIN jobs j ON c.company_id = j.company_id
+    GROUP BY c.company_name
+    ORDER BY total_jobs DESC
+    LIMIT 5
+  `;
+
+  db.query(sql, (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Database error" });
+    }
+    res.json(result);
+  });
+});

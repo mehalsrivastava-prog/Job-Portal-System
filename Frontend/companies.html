@@ -134,7 +134,9 @@ body {
 <script>
 
 let jobsData = [];
-
+function formatLPA(salary) {
+  return (salary / 100000).toFixed(1) + " LPA";
+}
 // Step 1: get all jobs
 fetch('http://localhost:3000/jobs')
   .then(res => res.json())
@@ -173,7 +175,7 @@ fetch('http://localhost:3000/jobs')
           const jobCard = `
   <div class="job">
     <h6>${job.title}</h6>
-    <p class="mb-1">₹${job.salary}</p>
+    <p class="mb-1">₹${formatLPA(job.salary)}</p>
     <p class="text-secondary">${job.location}</p>
 
     <button id="btn-${job.job_id}"
