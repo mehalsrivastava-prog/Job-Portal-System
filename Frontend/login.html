@@ -123,18 +123,18 @@ async function login(e) {
 
     if (data.success) {
 
-      // ✅ store user id
+      // store user id
       localStorage.setItem("user_id", data.user_id);
 
-      // 🔥 CHECK IF USER HAS SKILLS
+      // CHECK IF USER HAS SKILLS
       const skillRes = await fetch(`http://localhost:3000/user-skills/${data.user_id}`);
       const skillData = await skillRes.json();
 
       if (!skillData || skillData.length === 0) {
-        // 👉 No skills → go to setup
+        // No skills → go to setup
         window.location.href = "skills.html";
       } else {
-        // 👉 Already has skills → go home
+        // Already has skills → go home
         window.location.href = "home.html";
       }
 

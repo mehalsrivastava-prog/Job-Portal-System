@@ -76,6 +76,28 @@ ul {
   padding-left: 20px;
 }
 
+.navbar-brand {
+  color: #60a5fa !important;
+  font-weight: bold;
+}
+
+.navbar a {
+  color: white !important;
+  opacity: 1 !important;
+}
+
+.navbar a:hover {
+  color: white !important;
+}
+
+.nav-link {
+  color: white !important;
+}
+
+.nav-link:hover {
+  color: white !important;
+}
+
 </style>
 </head>
 
@@ -84,11 +106,27 @@ ul {
 <!-- NAVBAR (same style as your project) -->
 <nav class="navbar navbar-expand-lg">
   <div class="container">
-    <h5 class="text-white m-0">Company Dashboard</h5>
 
-    <div class="ms-auto">
-      <button class="btn btn-sm btn-outline-light" onclick="logout()">Logout</button>
+    <!-- LEFT -->
+    <a class="navbar-brand text-white" href="#">JobSearch</a>
+
+    <!-- RIGHT -->
+    <div class="ms-auto d-flex gap-3 align-items-center">
+
+      
+
+      <!-- Post Job Button -->
+      <button onclick="window.location.href='post_job.html'" class="btn btn-glow">
+        New Job Opening
+      </button>
+
+      <!-- Logout -->
+      <button onclick="logout()" class="btn btn-outline-light">
+        Logout
+      </button>
+
     </div>
+
   </div>
 </nav>
 
@@ -101,7 +139,7 @@ ul {
 <!-- JOB LIST -->
 <div class="container">
 
-  <h5 class="mb-4">📌 Your Job Openings</h5>
+  <h5 class="mb-4"> Your Job Openings</h5>
 
   <div class="row" id="companyJobs"></div>
 
@@ -163,7 +201,7 @@ fetch(`${API_URL}/company-dashboard/${company_id}`)
 
             <hr>
 
-            <h6>🎯 Top Candidates</h6>
+            <h6> Top Candidates</h6>
             <ul>${candidatesHTML}</ul>
 
           </div>
@@ -173,6 +211,89 @@ fetch(`${API_URL}/company-dashboard/${company_id}`)
 
   })
   .catch(err => console.log(err));
+
+  function logout() {
+  localStorage.clear();
+  window.location.href = "login.html";
+}
+
+  function postJob() {
+
+  const title = prompt("Enter Job Title:");
+  const description = prompt("Enter Job Description:");
+  let salaryInput = prompt("Enter Salary (e.g. 9.1LPA or 900000):");
+  const location = prompt("Enter Job Location:");
+  const skillsInput = prompt("Enter skills (comma separated):");
+  const skills = skillsInput.split(",").map(s => s.trim());
+
+  if (!title || !description || !salaryInput || !location) {
+    alert("All fields required");
+    return;
+  }
+
+  // salary conversion (same logic as backend)
+  let salary;
+  if (salaryInput.toLowerCase().includes("lpa")) {
+    salary = parseFloat(salaryInput.toLowerCase().replace("lpa", "")) * 100000;
+  } else {
+    salary = parseFloat(salaryInput);
+  }
+
+  if (isNaN(salary)) {
+    alert("Invalid salary");
+    return;
+  }
+
+  const companyId = localStorage.getItem("company_id"); // IMPORTANT
+
+  fetch("http://localhost:3000/add-job", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      company_id: companyId,
+      title,
+      salary,
+      location,
+      skills
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      alert("Job posted ");
+      location.reload();
+    } else {
+      alert("Error posting job");
+    }
+  })
+  .catch(err => console.error(err));
+  loadCompanyJobs();
+  
+}
+
+function loadCompanyJobs() {
+  const companyId = localStorage.getItem("company_id");
+
+  fetch(`http://localhost:3000/company/${companyId}/jobs`)
+    .then(res => res.json())
+    .then(jobs => {
+      const container = document.getElementById("jobsContainer");
+
+      if (jobs.length === 0) {
+        container.innerHTML = "No jobs posted yet.";
+        return;
+      }
+
+      container.innerHTML = jobs.map(job => `
+        <div style="margin-top:10px;">
+          <h4>${job.title}</h4>
+          <p>${job.location}</p>
+        </div>
+      `).join("");
+    });
+}
 
 </script>
 

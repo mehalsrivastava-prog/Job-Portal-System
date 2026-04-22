@@ -42,7 +42,7 @@ body {
 /* COMPACT VERTICAL BOX */
 .skill-box {
   width: 100%;
-  max-width: 400px;   /* 🔥 controls width (1/3 feel) */
+  max-width: 400px;   /*  controls width (1/3 feel) */
   min-height: 500px;  /* makes it vertical */
 }
 /* Skill buttons */
@@ -106,7 +106,7 @@ body {
 
 </div><script>
 
-// 🔐 CHECK LOGIN FIRST
+//  CHECK LOGIN FIRST
 const userId = localStorage.getItem("user_id");
 
 if (!userId) {
@@ -123,7 +123,7 @@ const skills = [
 
 let selectedSkills = [];
 
-renderSkills(); // 🔥 show UI immediately
+renderSkills(); // show UI immediately
 
 fetch(`http://localhost:3000/profile/${userId}`)
   .then(res => res.json())
@@ -185,7 +185,7 @@ function submitSkills() {
   })
   .then(res => res.json())
   .then(data => {
-    alert("Skills saved 🚀");
+    alert("Skills saved ");
     window.location.href = "home.html";
   })
   .catch(err => console.error(err));
