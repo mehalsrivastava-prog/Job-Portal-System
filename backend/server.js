@@ -380,3 +380,25 @@ app.post('/mark-learned', (req, res) => {
     res.send("Skill learned 🚀");
   });
 });
+
+// 🔍 HOMEPAGE SEARCH (separate from /jobs)
+app.get("/search-jobs", (req, res) => {
+  const search = req.query.q || "";
+  console.log("Search query:", search);
+  const query = `
+    SELECT j.job_id, j.title, j.location, c.company_name
+    FROM jobs j
+    JOIN companies c ON j.company_id = c.company_id
+    WHERE 
+      j.title LIKE ? OR 
+      c.company_name LIKE ? OR 
+      j.location LIKE ?
+  `;
+
+  const value = `%${search}%`;
+
+  db.query(query, [value, value, value], (err, results) => {
+    if (err) return res.status(500).send("Error searching jobs");
+    res.json(results);
+  });
+});

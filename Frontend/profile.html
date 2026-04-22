@@ -27,11 +27,14 @@
     }
 
     .profile-img {
-      width: 130px;
-      height: 130px;
-      border-radius: 50%;
-      margin-top: -70px;
-    }
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  margin-top: -70px;
+  border: 4px solid #0e254d;
+  object-fit: cover;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+}
 
     .badge-skill {
       background: #1e3a8a;
@@ -60,9 +63,9 @@
         <div class="cover"></div>
 
         <div class="p-3">
-          <img src="https://via.placeholder.com/150" class="profile-img">
-          <h3 id="name">Loading...</h3>
-        </div>
+  <img src="assets/image.jpg" class="profile-img">
+  <h3 id="name">Loading...</h3>
+</div>
       </div>
 
       <!-- Matches -->
@@ -82,18 +85,7 @@
         <div id="skillsContainer"></div>
       </div>
 
-      <!-- Progress -->
-      <div class="card-custom">
-        <h5>📊 Skill Progress</h5>
-        <div id="progressText"></div>
-
-        <div style="background:#1e293b; border-radius:5px; height:8px;">
-          <div id="progressBar"
-            style="height:8px; background:#3b82f6; width:0%; border-radius:5px;">
-          </div>
-        </div>
-      </div>
-
+      
     </div>
 
   </div>
@@ -186,7 +178,7 @@ function loadMatches(userId) {
                 </div>
               `).join("")}
             `
-            : `<div style="color:lightgreen;">✅ Ready to Apply 🚀</div>`
+            : `<div style="color:lightgreen;">Ready to Apply </div>`
           }
 
         </div>

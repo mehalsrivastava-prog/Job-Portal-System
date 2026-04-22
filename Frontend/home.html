@@ -72,6 +72,11 @@ body {
   color: white;
 }
 
+/* Results */
+#results {
+  margin-top: 40px;
+}
+
 /* Footer */
 footer {
   opacity: 0.6;
@@ -104,48 +109,85 @@ footer {
 
   <div class="row justify-content-center mt-4">
     <div class="col-md-4">
-      <input type="text" class="form-control search-box" placeholder="Search jobs...">
+      <input type="text" id="searchInput" class="form-control search-box" placeholder="Search jobs...">
     </div>
     <div class="col-md-2">
-      <button class="btn btn-glow w-100">Search</button>
+      <button id="searchBtn" class="btn btn-glow w-100">Search</button>
     </div>
   </div>
 </div>
 
-<!-- JOB CARDS -->
-<div class="container mt-5">
-  <div class="row">
-
-    <div class="col-md-4">
-      <div class="glass">
-        <h5>Frontend Developer</h5>
-        <p class="text-secondary">Startup Vibe 🚀</p>
-        <p>Remote</p>
-        <button class="btn btn-glow btn-sm">Apply</button>
-      </div>
-    </div>
-
-    <div class="col-md-4">
-      <div class="glass">
-        <h5>Backend Engineer</h5>
-        <p class="text-secondary">Big Tech 💻</p>
-        <p>Bangalore</p>
-        <button class="btn btn-glow btn-sm">Apply</button>
-      </div>
-    </div>
-
-    <div class="col-md-4">
-      <div class="glass">
-        <h5>UI/UX Designer</h5>
-        <p class="text-secondary">Creative Agency 🎨</p>
-        <p>Remote</p>
-        <button class="btn btn-glow btn-sm">Apply</button>
-      </div>
-    </div>
-
-  </div>
+<!-- 🔥 SEARCH RESULTS -->
+<div class="container" id="results">
+  <div class="row" id="resultsContainer"></div>
 </div>
 
+<script>
+const API_URL = "http://localhost:3000";
 
+const searchBtn = document.getElementById("searchBtn");
+const searchInput = document.getElementById("searchInput");
+const resultsContainer = document.getElementById("resultsContainer");
+
+searchBtn.addEventListener("click", searchJobs);
+
+searchInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") {
+    searchJobs();
+  }
+});
+
+function searchJobs() {
+  const query = searchInput.value;
+
+  console.log("Searching:", query);
+
+  fetch(`${API_URL}/search-jobs?q=${encodeURIComponent(query)}`)
+    .then(res => res.json())
+    .then(data => {
+      console.log("Results:", data);
+      displayResults(data);
+    })
+    .catch(err => console.error(err));
+}
+
+function displayResults(jobs) {
+  resultsContainer.innerHTML = "";
+
+  if (jobs.length === 0) {
+    resultsContainer.innerHTML = "<p>No jobs found 😢</p>";
+    return;
+  }
+
+  jobs.forEach(job => {
+    resultsContainer.innerHTML += `
+      <div class="col-md-4 mb-4">
+        <div class="glass">
+          <h5>${job.title}</h5>
+          <p class="text-secondary">${job.company_name}</p>
+          <p>${job.location || "Remote"}</p>
+          <button class="btn btn-glow btn-sm" onclick="applyJob(${job.job_id})">
+            Apply
+          </button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function applyJob(jobId) {
+  const user_id = localStorage.getItem("user_id");
+
+  fetch(`${API_URL}/apply`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ user_id, job_id: jobId })
+  })
+  .then(res => res.json())
+  .then(data => alert(data.message || "Applied!"));
+}
+</script>
 </body>
 </html>
