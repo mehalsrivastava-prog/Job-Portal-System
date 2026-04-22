@@ -94,3 +94,15 @@ CREATE TABLE application_logs (
     REFERENCES applications(application_id)
     ON DELETE CASCADE
 );
+
+ALTER TABLE companies 
+ADD email VARCHAR(255) UNIQUE,
+ADD password_hash VARCHAR(255);
+
+UPDATE companies
+SET email = CONCAT(LOWER(company_name), '@company.com'),
+    password_hash = 'default_hash';
+    
+ALTER TABLE companies 
+MODIFY email VARCHAR(255) NOT NULL,
+MODIFY password_hash VARCHAR(255) NOT NULL;
