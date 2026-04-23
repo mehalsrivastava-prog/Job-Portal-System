@@ -132,7 +132,7 @@ body {
 
 </div>
 <script>
-
+let appliedJobs = [];
 let jobsData = [];
 function formatLPA(salary) {
   return (salary / 100000).toFixed(1) + " LPA";
@@ -195,8 +195,6 @@ fetch('http://localhost:3000/jobs')
   })
   .catch(err => console.log(err));
 
-</script>
-<script>
 function applyJob(jobId) {
 
   const btn = document.getElementById(`btn-${jobId}`);
@@ -223,11 +221,19 @@ function applyJob(jobId) {
       job_id: jobId
     })
   })
-  .then(res => res.text())
+  .then(res => res.json())   // ✅ FIXED
   .then(data => {
+
+    if (!data.success) {
+      alert(data.message);
+      return;
+    }
+
     appliedJobs.push(jobId);
+
     btn.innerText = "Applied";
     btn.style.background = "green";
+
   })
   .catch(err => console.log(err));
 }

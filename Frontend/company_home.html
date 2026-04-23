@@ -140,10 +140,12 @@ ul {
 <div class="container">
 
   <h5 class="mb-4"> Your Job Openings</h5>
+  <hr>
 
   <div class="row" id="companyJobs"></div>
 
 </div>
+
 
 <script>
 const API_URL = "http://localhost:3000";
@@ -160,8 +162,7 @@ function formatLPA(salary) {
   return (salary / 100000).toFixed(1) + " LPA";
 }
 
-// fetch data
-fetch(`${API_URL}/company-dashboard/${company_id}`)
+fetch(`${API_URL}/company-full-dashboard/${company_id}`)
   .then(res => res.json())
   .then(data => {
 
@@ -177,124 +178,105 @@ fetch(`${API_URL}/company-dashboard/${company_id}`)
 
       let candidatesHTML = "";
 
-      if (!job.candidates || job.candidates.length === 0) {
-        candidatesHTML = `<p class="text-secondary">No matching candidates yet</p>`;
+      // ✅ NEW LOGIC (applicants, not candidates)
+      if (!job.applicants || job.applicants.length === 0) {
+        candidatesHTML = `<p class="text-secondary">No applicants yet</p>`;
       } else {
 
-        job.candidates.forEach((c, index) => {
+        job.applicants.forEach(app => {
           candidatesHTML += `
-            <li ${index === 0 ? 'class="text-success fw-bold"' : ''}>
-              ${c.name} (score: ${c.score})
+            <li>
+              ${app.name} - <b>${app.status}</b> 
+              <span class="text-info">(Match: ${app.score}%)</span>
+
+              <br>
+
+              <button onclick="updateStatus(${app.application_id}, 'shortlisted')" class="btn btn-sm btn-success mt-1">
+                Shortlist
+              </button>
+
+              <button onclick="updateStatus(${app.application_id}, 'interview')" class="btn btn-sm btn-warning mt-1">
+                Interview
+              </button>
+
+              <button onclick="updateStatus(${app.application_id}, 'rejected')" class="btn btn-sm btn-danger mt-1">
+                Reject
+              </button>
             </li>
+            <hr>
           `;
         });
 
       }
 
-      container.innerHTML += `
-        <div class="col-md-6 mb-4">
-          <div class="glass">
+      let topHTML = "";
 
-            <h5>${job.title}</h5>
-            <p class="text-success">₹${formatLPA(job.salary)}</p>
-            <p class="text-secondary">${job.location || "Remote"}</p>
+if (!job.topCandidates || job.topCandidates.length === 0) {
+  topHTML = `<p class="text-secondary">No matches yet</p>`;
+} else {
+  job.topCandidates.forEach(c => {
+    topHTML += `
+      <li>
+        ${c.name} 
+        <span class="text-info">(Match: ${c.score}%)</span>
+      </li>
+    `;
+  });
+}
 
-            <hr>
+container.innerHTML += `
+  <div class="col-md-6 mb-4">
+    <div class="glass">
 
-            <h6> Top Candidates</h6>
-            <ul>${candidatesHTML}</ul>
+      <h5>${job.title}</h5>
+      <p class="text-success">₹${formatLPA(job.salary)}</p>
+      <p class="text-secondary">${job.location || "Remote"}</p>
 
-          </div>
-        </div>
-      `;
+      <hr>
+
+      <h6>Applicants</h6>
+      <ul>${candidatesHTML}</ul>
+
+      <hr>
+
+      <h6>Top Candidates</h6>
+      <ul>${topHTML}</ul>
+
+    </div>
+  </div>
+`;
     });
 
   })
   .catch(err => console.log(err));
 
-  function logout() {
-  localStorage.clear();
-  window.location.href = "login.html";
-}
 
-  function postJob() {
-
-  const title = prompt("Enter Job Title:");
-  const description = prompt("Enter Job Description:");
-  let salaryInput = prompt("Enter Salary (e.g. 9.1LPA or 900000):");
-  const location = prompt("Enter Job Location:");
-  const skillsInput = prompt("Enter skills (comma separated):");
-  const skills = skillsInput.split(",").map(s => s.trim());
-
-  if (!title || !description || !salaryInput || !location) {
-    alert("All fields required");
-    return;
-  }
-
-  // salary conversion (same logic as backend)
-  let salary;
-  if (salaryInput.toLowerCase().includes("lpa")) {
-    salary = parseFloat(salaryInput.toLowerCase().replace("lpa", "")) * 100000;
-  } else {
-    salary = parseFloat(salaryInput);
-  }
-
-  if (isNaN(salary)) {
-    alert("Invalid salary");
-    return;
-  }
-
-  const companyId = localStorage.getItem("company_id"); // IMPORTANT
-
-  fetch("http://localhost:3000/add-job", {
+// 🔥 UPDATE STATUS FUNCTION
+function updateStatus(applicationId, status) {
+  fetch(`${API_URL}/update-status`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      company_id: companyId,
-      title,
-      salary,
-      location,
-      skills
+      application_id: applicationId,
+      status: status
     })
   })
   .then(res => res.json())
   .then(data => {
-    if (data.success) {
-      alert("Job posted ");
-      location.reload();
-    } else {
-      alert("Error posting job");
-    }
+    alert("Status updated!");
+    location.reload();
   })
-  .catch(err => console.error(err));
-  loadCompanyJobs();
-  
+  .catch(err => console.log(err));
 }
 
-function loadCompanyJobs() {
-  const companyId = localStorage.getItem("company_id");
 
-  fetch(`http://localhost:3000/company/${companyId}/jobs`)
-    .then(res => res.json())
-    .then(jobs => {
-      const container = document.getElementById("jobsContainer");
-
-      if (jobs.length === 0) {
-        container.innerHTML = "No jobs posted yet.";
-        return;
-      }
-
-      container.innerHTML = jobs.map(job => `
-        <div style="margin-top:10px;">
-          <h4>${job.title}</h4>
-          <p>${job.location}</p>
-        </div>
-      `).join("");
-    });
+// LOGOUT
+function logout() {
+  localStorage.clear();
+  window.location.href = "login.html";
 }
-
 </script>
 
 </body>

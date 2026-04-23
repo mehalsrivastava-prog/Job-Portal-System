@@ -105,7 +105,10 @@ async function submitJob() {
   }
 
   //convert skills string → array
-  const skills = skillsInput.split(",").map(s => s.trim());
+  const skills = skillsInput
+    .toLowerCase()
+    .split(",")
+    .map(s => s.trim());
 
   const company_id = localStorage.getItem("company_id");
 
@@ -139,7 +142,7 @@ async function submitJob() {
 
     if (data.success) {
       alert("Job posted ");
-      window.location.href = "company-dashboard.html";
+      window.location.href = "company_home.html";
     } else {
       alert("Error posting job");
     }

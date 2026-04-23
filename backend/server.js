@@ -112,9 +112,9 @@ app.post("/apply", (req, res) => {
   const { user_id, job_id } = req.body;
 
   db.query(
-    "INSERT INTO applications (user_id, job_id) VALUES (?, ?)",
+    "INSERT INTO applications (user_id, job_id, status) VALUES (?, ?, 'applied')",
     [user_id, job_id],
-    (err) => {
+    (err, result) => {
 
       if (err) {
         if (err.code === "ER_DUP_ENTRY") {
@@ -126,6 +126,17 @@ app.post("/apply", (req, res) => {
 
         return res.status(500).send("Error applying");
       }
+
+      const applicationId = result.insertId;
+
+      // 🔥 ADD THIS (THIS IS THE FIX)
+      db.query(
+        "INSERT INTO application_logs (application_id, status, updated_at) VALUES (?, 'applied', CURDATE())",
+        [applicationId],
+        (err2) => {
+          if (err2) console.log("Log insert error:", err2);
+        }
+      );
 
       res.json({
         success: true,
@@ -540,7 +551,6 @@ app.get("/company/:id/jobs", (req, res) => {
   );
 });
 
-// 🔥 OUTSIDE everything
 app.post("/add-job", (req, res) => {
   console.log(" ADD JOB HIT");
 
@@ -557,13 +567,134 @@ app.post("/add-job", (req, res) => {
         return res.status(500).json({ success: false });
       }
 
+      const jobId = result.insertId;
+
+      // 🔥 INSERT SKILLS INTO job_skills
+      skills.forEach(skillName => {
+
+        db.query(
+          "SELECT skill_id FROM skills WHERE LOWER(skill_name) = LOWER(?)",
+          [skillName],
+          (err2, res2) => {
+
+            if (err2 || res2.length === 0) {
+              console.log("Skill not found:", skillName);
+              return;
+            }
+
+            const skillId = res2[0].skill_id;
+
+            db.query(
+              "INSERT INTO job_skills (job_id, skill_id) VALUES (?, ?)",
+              [jobId, skillId],
+              (err3) => {
+                if (err3) console.log("Insert skill error:", err3);
+              }
+            );
+          }
+        );
+
+      });
+
       res.json({ success: true });
     }
   );
 });
-app.post("/add-job", (req, res) => {
-  console.log("🔥 ADD JOB HIT");
-  res.json({ success: true });
+
+app.get("/company-full-dashboard/:company_id", (req, res) => {
+  const companyId = req.params.company_id;
+
+  const query = `
+  SELECT 
+    j.job_id,
+    j.title,
+    j.location,
+    j.salary,
+
+    u.user_id,
+    u.name,
+
+    MAX(a.application_id) AS application_id,
+    MAX(a.status) AS status,
+
+    COUNT(us.skill_id) AS matched_skills,
+    COUNT(js.skill_id) AS total_skills
+
+  FROM jobs j
+
+  LEFT JOIN applications a ON j.job_id = a.job_id
+  LEFT JOIN users u ON a.user_id = u.user_id
+
+  LEFT JOIN job_skills js ON j.job_id = js.job_id
+  LEFT JOIN user_skills us 
+    ON js.skill_id = us.skill_id 
+    AND us.user_id = u.user_id
+
+  WHERE j.company_id = ?
+
+  GROUP BY 
+    j.job_id, j.title, j.location, j.salary,
+    u.user_id, u.name
+`;
+
+  db.query(query, [companyId], (err, results) => {
+    if (err) return res.status(500).send(err);
+
+    const jobs = {};
+
+    results.forEach(row => {
+      if (!jobs[row.job_id]) {
+        jobs[row.job_id] = {
+          job_id: row.job_id,
+          title: row.title,
+          location: row.location,
+          salary: row.salary,
+          applicants: [],
+          topCandidates: []
+        };
+      }
+
+      if (row.user_id) {
+        const score = row.total_skills > 0
+          ? Math.round((row.matched_skills / row.total_skills) * 100)
+          : 0;
+
+        jobs[row.job_id].applicants.push({
+          application_id: row.application_id,
+          name: row.name,
+          status: row.status,
+          score: score
+        });
+      }
+    });
+
+    Object.values(jobs).forEach(job => {
+      job.applicants.sort((a, b) => b.score - a.score);
+      job.topCandidates = job.applicants.slice(0, 5);
+    });
+
+    res.json(Object.values(jobs));
+  });
+});
+
+app.post("/update-status", (req, res) => {
+  const { application_id, status } = req.body;
+
+  db.query(
+    "UPDATE applications SET status = ? WHERE application_id = ?",
+    [status, application_id],
+    (err) => {
+      if (err) return res.status(500).send(err);
+
+      // 🔥 add log entry
+      db.query(
+        "INSERT INTO application_logs (application_id, status, updated_at) VALUES (?, ?, CURDATE())",
+        [application_id, status]
+      );
+
+      res.json({ success: true });
+    }
+  );
 });
 
 app.listen(3000, () => {
