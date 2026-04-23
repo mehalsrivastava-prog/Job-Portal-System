@@ -115,13 +115,16 @@ if (!userId) {
 }
 
 // ALL SKILLS
-const skills = [
-  "Algorithms","AWS","C++","Data Analysis","Docker","Git",
-  "Java","Linux","Machine Learning","Node.js","Python",
-  "React","SQL","Testing","Web Development"
-];
+let skills = [];
 
 let selectedSkills = [];
+fetch("http://localhost:3000/all-skills")
+  .then(res => res.json())
+  .then(data => {
+    skills = data.map(s => s.skill_name);
+    renderSkills();
+  })
+  .catch(err => console.error(err));
 
 renderSkills(); // show UI immediately
 
@@ -149,7 +152,10 @@ function renderSkills() {
       div.classList.add("selected");
     }
 
-    div.innerText = skill;
+        div.innerText = skill
+        .split(" ")
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
     div.onclick = () => toggleSkill(skill, div);
 
     container.appendChild(div);

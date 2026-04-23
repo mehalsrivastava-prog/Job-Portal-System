@@ -218,10 +218,6 @@ app.get("/dashboard/recent-applications/:userId", (req, res) => {
   });
 });
 
-// ==========================
-// 🚀 START SERVER
-// ==========================
-
 app.get('/profile/:id', (req, res) => {
   const userId = req.params.id;
 
@@ -542,6 +538,12 @@ app.post("/company-signup", (req, res) => {
   });
 });
 
+app.get("/all-skills", (req, res) => {
+  db.query("SELECT * FROM skills", (err, results) => {
+    if (err) return res.status(500).send(err);
+    res.json(results);
+  });
+});
 
 app.get("/company/:id/jobs", (req, res) => {
   db.query(
@@ -577,20 +579,50 @@ app.post("/add-job", (req, res) => {
           [skillName],
           (err2, res2) => {
 
-            if (err2 || res2.length === 0) {
-              console.log("Skill not found:", skillName);
+            if (err2) {
+              console.log(err2);
               return;
             }
 
-            const skillId = res2[0].skill_id;
+            // 🔴 If skill NOT found → CREATE it
+            if (res2.length === 0) {
 
-            db.query(
-              "INSERT INTO job_skills (job_id, skill_id) VALUES (?, ?)",
-              [jobId, skillId],
-              (err3) => {
-                if (err3) console.log("Insert skill error:", err3);
-              }
-            );
+              db.query(
+                "INSERT INTO skills (skill_name) VALUES (LOWER(?))",
+                [skillName],
+                (err3, res3) => {
+
+                  if (err3) {
+                    console.log("Skill insert error:", err3);
+                    return;
+                  }
+
+                  const newSkillId = res3.insertId;
+
+                  db.query(
+                    "INSERT INTO job_skills (job_id, skill_id) VALUES (?, ?)",
+                    [jobId, newSkillId],
+                    (err4) => {
+                      if (err4) console.log("Insert job_skill error:", err4);
+                    }
+                  );
+                }
+              );
+
+            } else {
+
+              // ✅ Skill exists
+              const skillId = res2[0].skill_id;
+
+              db.query(
+                "INSERT INTO job_skills (job_id, skill_id) VALUES (?, ?)",
+                [jobId, skillId],
+                (err3) => {
+                  if (err3) console.log("Insert job_skill error:", err3);
+                }
+              );
+            }
+
           }
         );
 
