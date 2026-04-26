@@ -75,7 +75,7 @@ app.post("/login", (req, res) => {
       if (user.password_hash === password) {
         return res.json({
           success: true,
-          user_id: user.user_id   // 🔥 IMPORTANT
+          user_id: user.user_id
         });
       }
 
