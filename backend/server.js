@@ -4,9 +4,6 @@ const cors = require("cors");
 
 const app = express();
 
-// ==========================
-// ✅ MIDDLEWARE
-// ==========================
 app.use(cors());
 app.use(express.json());
 
@@ -19,7 +16,7 @@ const db = mysql.createPool({
   host: "interchange.proxy.rlwy.net",
   port: 21480,
   user: "root",
-  password: "lCAAzdRJpthCXWElhgNKZtMGTbMHMMDD",
+  password: "",
   database: "job_portal",
   waitForConnections: true,
   connectionLimit: 10,
@@ -37,18 +34,11 @@ db.getConnection((err, connection) => {
   console.log("MySQL Pool Connected");
   connection.release();
 });
-// ==========================
-// 🚀 BASIC ROUTE
-// ==========================
+
 app.get("/", (req, res) => {
   res.send("Server running 🚀");
 });
 
-// ==========================
-// 🔐 AUTH ROUTES
-// ==========================
-
-// SIGNUP
 app.post("/signup", (req, res) => {
   const { name, email, password } = req.body;
 
@@ -68,7 +58,6 @@ app.post("/signup", (req, res) => {
   );
 });
 
-// LOGIN (🔥 MATCHES YOUR FRONTEND)
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
@@ -95,11 +84,6 @@ app.post("/login", (req, res) => {
   );
 });
 
-// ==========================
-// 💼 JOB ROUTES
-// ==========================
-
-// GET JOBS
 app.get("/jobs", (req, res) => {
   db.query("SELECT * FROM jobs", (err, results) => {
     if (err) return res.status(500).send("Error fetching jobs");
@@ -107,7 +91,6 @@ app.get("/jobs", (req, res) => {
   });
 });
 
-// APPLY JOB
 app.post("/apply", (req, res) => {
   const { user_id, job_id } = req.body;
 
@@ -129,7 +112,7 @@ app.post("/apply", (req, res) => {
 
       const applicationId = result.insertId;
 
-      // 🔥 ADD THIS (THIS IS THE FIX)
+  
       db.query(
         "INSERT INTO application_logs (application_id, status, updated_at) VALUES (?, 'applied', CURDATE())",
         [applicationId],
@@ -146,9 +129,6 @@ app.post("/apply", (req, res) => {
   );
 });
 
-// ==========================
-// 🏢 COMPANY ROUTES
-// ==========================
 app.get("/companies", (req, res) => {
   db.query("SELECT * FROM companies", (err, results) => {
     if (err) return res.status(500).send("Error fetching companies");
@@ -156,11 +136,6 @@ app.get("/companies", (req, res) => {
   });
 });
 
-// ==========================
-// 📊 DASHBOARD ROUTES
-// ==========================
-
-// STATS
 app.get("/dashboard/stats/:userId", (req, res) => {
   const userId = req.params.userId;
 
@@ -194,7 +169,7 @@ app.get("/dashboard/stats/:userId", (req, res) => {
   );
 });
 
-// RECENT APPLICATIONS
+
 app.get("/dashboard/recent-applications/:userId", (req, res) => {
   const userId = req.params.userId;
 
@@ -269,8 +244,6 @@ app.get('/recommended-jobs/:id', (req, res) => {
 
   db.query(query, (err, results) => {
     if (err) return res.status(500).send(err);
-
-    // Get user skills
     db.query(
       "SELECT skill_id FROM user_skills WHERE user_id = ?",
       [userId],
@@ -305,7 +278,7 @@ app.get('/recommended-jobs/:id', (req, res) => {
           }
         });
 
-        // Convert to array + calculate %
+
         const jobs = Object.values(jobsMap)
           .map(job => ({
             ...job,
@@ -329,7 +302,7 @@ app.post('/save-skills', (req, res) => {
     return res.status(400).json({ error: "Missing data" });
   }
 
-  // Step 1: Get skill_ids from names
+
   const query = `
     SELECT skill_id, skill_name 
     FROM skills 
@@ -339,7 +312,6 @@ app.post('/save-skills', (req, res) => {
   db.query(query, [skills], (err, results) => {
     if (err) return res.status(500).send(err);
 
-    // Step 2: Insert into user_skills
     const values = results.map(skill => [user_id, skill.skill_id]);
 
     if (values.length === 0) {
@@ -368,7 +340,7 @@ app.get('/user-skills/:id', (req, res) => {
     (err, results) => {
       if (err) return res.status(500).send(err);
 
-      res.json(results); // empty [] or filled
+      res.json(results); 
     }
   );
 });
@@ -394,7 +366,6 @@ app.post('/mark-learned', (req, res) => {
   });
 });
 
-// 🔍 HOMEPAGE SEARCH (separate from /jobs)
 app.get("/search-jobs", (req, res) => {
   const search = req.query.q || "";
   console.log("Search query:", search);
@@ -571,7 +542,6 @@ app.post("/add-job", (req, res) => {
 
       const jobId = result.insertId;
 
-      // 🔥 INSERT SKILLS INTO job_skills
       skills.forEach(skillName => {
 
         db.query(
@@ -584,7 +554,6 @@ app.post("/add-job", (req, res) => {
               return;
             }
 
-            // 🔴 If skill NOT found → CREATE it
             if (res2.length === 0) {
 
               db.query(
@@ -611,7 +580,6 @@ app.post("/add-job", (req, res) => {
 
             } else {
 
-              // ✅ Skill exists
               const skillId = res2[0].skill_id;
 
               db.query(
@@ -718,7 +686,6 @@ app.post("/update-status", (req, res) => {
     (err) => {
       if (err) return res.status(500).send(err);
 
-      // 🔥 add log entry
       db.query(
         "INSERT INTO application_logs (application_id, status, updated_at) VALUES (?, ?, CURDATE())",
         [application_id, status]
