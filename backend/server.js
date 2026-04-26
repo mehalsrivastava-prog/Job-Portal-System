@@ -16,7 +16,7 @@ const db = mysql.createPool({
   host: "interchange.proxy.rlwy.net",
   port: 21480,
   user: "root",
-  password: "",
+  password: "", //password is removed
   database: "job_portal",
   waitForConnections: true,
   connectionLimit: 10,
